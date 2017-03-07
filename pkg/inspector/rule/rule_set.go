@@ -316,6 +316,19 @@ const defaultRuleSet = `---
   packageName: kubelet
   packageVersion: 1.5.3_1-1
 
+- kind: PackageDependency
+  when: ["ubuntu"]
+  packageName: libselinux-python
+  anyVersion: true
+- kind: PackageDependency
+  when: ["centos"]
+  packageName: libselinux-python
+  anyVersion: true
+- kind: PackageDependency
+  when: ["rhel"]
+  packageName: libselinux-python
+  anyVersion: true
+
 # Gluster packages
 - kind: PackageDependency
   when: ["storage", "centos"]

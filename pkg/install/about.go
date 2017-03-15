@@ -23,6 +23,11 @@ type ListableNode struct {
 	Version semver.Version
 }
 
+// HasRoles returns true ic contains any of the roles
+func (n *ListableNode) HasRoles(roles ...string) bool {
+	return util.Intersects(roles, n.Roles)
+}
+
 // AboutKismatic contains the version information of the currently running binary
 var AboutKismatic semver.Version
 
@@ -39,6 +44,16 @@ func SetVersion(v string) {
 func IsOlderVersion(that semver.Version) bool {
 	this := AboutKismatic
 	return this.GT(that)
+}
+
+// IsOlderVersion
+func IsOlderThanVersion(this semver.Version, that string) bool {
+	thatVersion, err := parseVersion(that)
+	if err != nil {
+		panic("failed to parse version " + that)
+	}
+
+	return this.GT(thatVersion)
 }
 
 func parseVersion(versionString string) (semver.Version, error) {

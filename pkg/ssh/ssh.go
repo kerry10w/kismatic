@@ -27,12 +27,21 @@ var baseSSHArgs = []string{
 type Client interface {
 	Output(pty bool, args ...string) (string, error)
 	Shell(pty bool, args ...string) error
+	CopyFromRemote(src, dest string) (string, error)
 }
 
 type ExternalClient struct {
 	BaseArgs   []string
 	BinaryPath string
 	cmd        *exec.Cmd
+	conn       Connection
+}
+
+type Connection struct {
+	hostname string
+	port     int
+	user     string
+	key      string
 }
 
 // TestConnection connects to ip:port as user with key and immediately exits.
@@ -70,6 +79,7 @@ func newExternalClient(sshBinaryPath string, user string, host string, port int,
 	client := &ExternalClient{
 		BinaryPath: sshBinaryPath,
 		BaseArgs:   args,
+		conn:       Connection{hostname: host, port: port, user: user, key: key},
 	}
 
 	return client, nil
@@ -95,6 +105,19 @@ func (client *ExternalClient) Shell(pty bool, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+// CopyFromRemote copies files from remote to local using scp
+func (client *ExternalClient) CopyFromRemote(src, dest string) (string, error) {
+	sshBinaryPath, err := exec.LookPath("scp")
+	if err != nil {
+		return "", fmt.Errorf("command not found: scp")
+	}
+	conn := client.conn
+	ver := exec.Command(sshBinaryPath, "-o", "StrictHostKeyChecking no", "-i", conn.key, conn.user+"@"+conn.hostname+":"+src, dest)
+
+	out, err := ver.CombinedOutput()
+	return string(out), err
 }
 
 func getSSHCmd(binaryPath string, pty bool, args ...string) *exec.Cmd {
